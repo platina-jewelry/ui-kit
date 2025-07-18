@@ -2,6 +2,8 @@
 
 **Универсальная кнопка для React и React Native от Platina Jewelry**
 
+![Пример использования](./example.png)
+
 ---
 
 ## Установка
