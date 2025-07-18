@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run type checking
+      run: npm run tsc
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Check code formatting
+      run: npm run format:check
+
+    - name: Run tests
+      run: npm run test:coverage
+
+    - name: Check for unused exports
+      run: npx ts-prune
+
+    - name: Build package
+      run: npm run build
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+
+    # Проверяем, что пакет можно установить
+    - name: Test package installation
+      run: |
+        npm pack
+        npm install -g ./platina-jewelry-button-*.tgz
+
+  # Проверяем совместимость с React Native
+  react-native-compatibility:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install React Native dependencies
+      run: npm install react-native@latest
+
+    - name: Test React Native compatibility
+      run: |
+        npm run build
+        node -e "
+          const pkg = require('./dist/index.js');
+          console.log('Package exports:', Object.keys(pkg));
+          console.log('Button component:', typeof pkg.Button);

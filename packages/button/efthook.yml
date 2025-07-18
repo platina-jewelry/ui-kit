@@ -1,0 +1,26 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.{js,jsx,ts,tsx,css,scss,html,json,md}"
+      run: npm run format
+      stage_fixed: true
+
+    lint:
+      glob: "*.{js,jsx,ts,tsx}"
+      run: npm run lint
+
+    type-check:
+      glob: "*.{ts,tsx}"
+      run: npm run tsc
+
+    test:
+      run: npm test -- --passWithNoTests
+
+    unused-exports:
+      run: npx ts-prune
+
+post-merge:
+  commands:
+    install:
+      run: npm ci
